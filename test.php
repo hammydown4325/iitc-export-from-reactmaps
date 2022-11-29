@@ -10,11 +10,14 @@ $iitc = [
 
 if ( ( $handle = fopen( "iitc-export.csv", "r" ) ) !== false ) {
 	while ( ( $data = fgetcsv( $handle, 100000, "," ) ) !== false ) {
-		$iitc[ $data[0] ] = [
-			'guid'  => $data[4],
-			'lat'  => $data[1],
-			'lng'  => $data[2],
-			'image'  => $data[3],
+		$iitc[$data[1] ] = [
+			$data[2] => [
+				'name' => $data[0],
+				'guid'  => $data[4],
+				'lat'  => $data[1],
+				'lng'  => $data[2],
+				'image'  => $data[3]
+			]
 		];
 	}
 	fclose( $handle );
@@ -32,18 +35,25 @@ $p    = $p['data']['pokestops'];
 $found = 0;
 $notfound = 0;
 echo 'GYMS<br />';
-function find_guid($name){
+function find_data($lat, $lng) {
 	global $iitc;
-	if(array_key_exists($name,$iitc)){
-		return $iitc[$name]['guid'];
+	$lat = (string) $lat;
+	$lng = (string) $lng;
+	if(array_key_exists($lat,$iitc)){
+		if(array_key_exists($lng,$iitc[$lat])){
+			return $iitc[$lat][$lng];
+		}
 	}
 	return false;
 }
 foreach ( $g as $point ) {
-	$guid = find_guid($point['name']);
-	if($guid !== false){
-		$data['gyms'][$guid ] = [
-			"guid"  => $guid,
+	$d = find_data($point['lat'],$point['lon']);
+	if($d !== false){
+		if($point['name'] == '' || strlen($d['name']) > $point['name']){
+			$point['name'] = $d['name'];
+		}
+		$data['gyms'][$d['guid'] ] = [
+			"guid"  => $d['guid'],
 			"lat"   => $point['lat'],
 			"lng"   => $point['lon'],
 			"name"  => $point['name'],
@@ -60,10 +70,13 @@ foreach ( $g as $point ) {
 echo 'POKESTOPS<br />';
 
 foreach ( $p as $point ) {
-	$guid = find_guid($point['name']);
-	if($guid !== false){
-		$data['pokestops'][$guid ] = [
-			"guid"  => $guid,
+	$d = find_data($point['lat'],$point['lon']);
+	if($d !== false){
+		if($point['name'] == '' || strlen($d['name']) > $point['name']){
+			$point['name'] = $d['name'];
+		}
+		$data['pokestops'][$d['guid'] ] = [
+			"guid"  => $d['guid'],
 			"lat"   => $point['lat'],
 			"lng"   => $point['lon'],
 			"name"  => $point['name'],
